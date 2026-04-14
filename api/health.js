@@ -1,6 +1,6 @@
 // GET /api/health — health check
 
-const { cors } = require('../lib/store');
+import { cors } from '../lib/store.js';
 
 export default function handler(req, res) {
   cors(res);
