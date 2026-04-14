@@ -2,5 +2,6 @@
   "name": "elementum-procurement-demo",
   "version": "1.0.0",
   "description": "Elementum AI Procurement Orchestration Demo",
-  "private": true
+  "private": true,
+  "type": "module"
 }
