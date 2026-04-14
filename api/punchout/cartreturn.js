@@ -2,7 +2,7 @@
 // Called by amazon-mock.html when user submits their cart.
 // Creates a PR and updates the flow session.
 
-const { store, genId, aiPolicyCheck, generatePO, cors } = require('../../lib/store');
+import { store, genId, aiPolicyCheck, generatePO, cors } from '../../lib/store.js';
 
 export default function handler(req, res) {
   cors(res);
