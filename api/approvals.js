@@ -1,7 +1,7 @@
 // GET  /api/approvals   — list pending approvals
 // POST /api/approvals/[prId] — approve or deny a PR
 
-const { store, generatePO, cors } = require('../lib/store');
+import { store, generatePO, cors } from '../lib/store.js';
 
 export default function handler(req, res) {
   cors(res);
