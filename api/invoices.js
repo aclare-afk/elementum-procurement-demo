@@ -1,6 +1,6 @@
 // GET /api/invoices — list all invoices
 
-const { store, cors } = require('../lib/store');
+import { store, cors } from '../lib/store.js';
 
 export default function handler(req, res) {
   cors(res);
