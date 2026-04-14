@@ -2,7 +2,7 @@
 // Tim's contract — Elementum calls this to start a punchout session.
 // Returns a shopping URL with record_id baked in.
 
-const { store, genId, cors } = require('../../lib/store');
+import { store, genId, cors } from '../../lib/store.js';
 
 export default function handler(req, res) {
   cors(res);
