@@ -2,7 +2,7 @@
 // POST /api/flow/[flowId]/punchout — initiate punchout for a flow
 // POST /api/flow/[flowId]/cart-return — handled in cart-return.js
 
-const { store, cors } = require('../../lib/store');
+import { store, cors } from '../../lib/store.js';
 
 export default function handler(req, res) {
   cors(res);
