@@ -21,6 +21,10 @@
       "destination": "/procurement.html"
     },
     {
+      "source": "/pr-confirmation",
+      "destination": "/pr-confirmation.html"
+    },
+    {
       "source": "/",
       "destination": "/amazon-mock.html"
     }
