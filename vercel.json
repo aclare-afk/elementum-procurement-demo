@@ -1,10 +1,28 @@
 {
   "rewrites": [
-    { "source": "/api/flow/:flowId/punchout",      "destination": "/api/flow/[flowId]" },
-    { "source": "/api/flow/:flowId/cart-return",   "destination": "/api/punchout/cart-return" },
-    { "source": "/api/flow/:flowId",               "destination": "/api/flow/[flowId]" },
-    { "source": "/api/approvals/:prId",            "destination": "/api/approvals" },
-    { "source": "/amazon-mock.html",               "destination": "/amazon-mock.html" },
-    { "source": "/",                               "destination": "/index.html" }
+    {
+      "source": "/api/flow/:flowId/punchout",
+      "destination": "/api/flow/[flowId]"
+    },
+    {
+      "source": "/api/flow/:flowId/cart-return",
+      "destination": "/api/punchout/cart-return"
+    },
+    {
+      "source": "/api/flow/:flowId",
+      "destination": "/api/flow/[flowId]"
+    },
+    {
+      "source": "/api/approvals/:prId",
+      "destination": "/api/approvals"
+    },
+    {
+      "source": "/procurement",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/",
+      "destination": "/amazon-mock.html"
+    }
   ]
 }
