@@ -18,11 +18,7 @@
     },
     {
       "source": "/procurement",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/",
-      "destination": "/amazon-mock.html"
+      "destination": "/procurement.html"
     }
   ]
 }
