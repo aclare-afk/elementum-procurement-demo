@@ -9,10 +9,8 @@ export default function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { record_id, user } = req.body;
-  if (!record_id || !user) {
-    return res.status(400).json({ error: 'record_id and user are required' });
-  }
+  const record_id = req.body.record_id && req.body.record_id !== "$record_id" ? req.body.record_id : "DEMO-" + Date.now();
+  const user      = req.body.user || "Elementum User";
 
   const token       = Math.random().toString(36).slice(2, 18);
   const baseUrl     = `https://${req.headers.host}`;
