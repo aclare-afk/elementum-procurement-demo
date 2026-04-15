@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Amazon Business</title>
+<link href="https://fonts.googleapis.com/css2?family=Amazon+Ember:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', Arial, sans-serif; background: #EAEDED; color: #0F1111; }
+
+  /* HEADER */
+  .amz-header { background: #131921; padding: 0; }
+  .amz-top { display: flex; align-items: center; gap: 16px; padding: 8px 16px; }
+  .amz-logo { color: #FF9900; font-size: 22px; font-weight: 800; letter-spacing: -1px; white-space: nowrap; }
+  .amz-logo span { color: white; }
+  .amz-business-badge { background: #232F3E; color: #FF9900; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 3px; letter-spacing: 1px; margin-left: 4px; }
+  .amz-search { flex: 1; display: flex; max-width: 700px; }
+  .amz-search-cat { background: #F3F3F3; border: none; padding: 0 8px; font-size: 12px; border-radius: 4px 0 0 4px; color: #555; cursor: pointer; }
+  .amz-search input { flex: 1; padding: 8px 12px; border: none; font-size: 14px; outline: none; }
+  .amz-search-btn { background: #FF9900; border: none; padding: 8px 14px; cursor: pointer; border-radius: 0 4px 4px 0; font-size: 16px; }
+  .amz-search-btn:hover { background: #e88b00; }
+  .amz-nav { background: #232F3E; padding: 6px 16px; display: flex; align-items: center; gap: 20px; font-size: 13px; color: #DDD; }
+  .amz-nav a { color: #DDD; text-decoration: none; white-space: nowrap; }
+  .amz-nav a:hover { color: white; }
+
+  /* PUNCHOUT BANNER */
+  .punchout-banner { background: linear-gradient(90deg, #1a3a5c, #0f2942); border-bottom: 3px solid #FF9900; padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .pb-left { display: flex; align-items: center; gap: 10px; }
+  .pb-icon { font-size: 20px; }
+  .pb-text strong { color: #FF9900; font-size: 13px; display: block; }
+  .pb-text span { color: #aaa; font-size: 11px; }
+  .pb-session { font-family: monospace; font-size: 10px; color: #666; }
+
+  /* MAIN LAYOUT */
+  .main { display: flex; gap: 0; max-width: 1400px; margin: 0 auto; padding: 16px; }
+  .sidebar { width: 220px; flex-shrink: 0; margin-right: 16px; }
+  .content { flex: 1; }
+
+  /* SIDEBAR */
+  .sidebar-section { background: white; border: 1px solid #DDD; border-radius: 4px; padding: 16px; margin-bottom: 12px; }
+  .sidebar-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; border-bottom: 1px solid #EEE; padding-bottom: 8px; }
+  .sidebar-item { font-size: 13px; color: #007185; cursor: pointer; padding: 3px 0; display: block; }
+  .sidebar-item:hover { color: #C7511F; text-decoration: underline; }
+  .sidebar-item.active { color: #C7511F; font-weight: 600; }
+  .price-range { display: flex; gap: 8px; align-items: center; font-size: 12px; margin-top: 8px; }
+  .price-range input { width: 60px; padding: 4px; border: 1px solid #DDD; border-radius: 3px; font-size: 12px; }
+  .price-range button { background: #FFD814; border: 1px solid #FCD200; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px; }
+
+  /* RESULTS BAR */
+  .results-bar { background: white; border: 1px solid #DDD; border-radius: 4px; padding: 10px 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+  .results-count { color: #555; }
+  .results-count strong { color: #C7511F; }
+  .sort-select { font-size: 13px; padding: 4px 8px; border: 1px solid #DDD; border-radius: 3px; }
+
+  /* PRODUCT GRID */
+  .product-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .product-card { background: white; border: 1px solid #DDD; border-radius: 4px; padding: 16px; cursor: pointer; transition: box-shadow .15s; position: relative; }
+  .product-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+  .product-badge { position: absolute; top: 8px; left: 8px; background: #CC0C39; color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 2px; }
+  .product-badge.business { background: #007185; }
+  .product-img { width: 100%; height: 140px; display: flex; align-items: center; justify-content: center; font-size: 56px; margin-bottom: 10px; background: #F8F8F8; border-radius: 4px; }
+  .product-title { font-size: 13px; color: #007185; line-height: 1.4; margin-bottom: 6px; height: 36px; overflow: hidden; }
+  .product-rating { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; }
+  .stars { color: #FF9900; font-size: 12px; }
+  .review-count { font-size: 11px; color: #007185; }
+  .product-price { font-size: 18px; font-weight: 700; color: #0F1111; }
+  .product-price-unit { font-size: 11px; color: #555; }
+  .product-delivery { font-size: 11px; color: #007600; margin-top: 4px; }
+  .product-business-price { background: #F0F8FF; border: 1px solid #B3D9EE; border-radius: 3px; padding: 4px 8px; margin-top: 6px; font-size: 11px; color: #005276; }
+  .add-btn { width: 100%; margin-top: 10px; background: #FFD814; border: 1px solid #FCD200; border-radius: 20px; padding: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .1s; }
+  .add-btn:hover { background: #F7CA00; }
+  .add-btn.added { background: #4ADE80; border-color: #22c55e; color: #166534; }
+
+  /* CART SIDEBAR */
+  .cart-panel { position: fixed; right: 0; top: 0; bottom: 0; width: 340px; background: white; border-left: 2px solid #DDD; box-shadow: -4px 0 20px rgba(0,0,0,.15); z-index: 100; display: flex; flex-direction: column; transform: translateX(100%); transition: transform .3s; }
+  .cart-panel.open { transform: translateX(0); }
+  .cart-header { background: #131921; color: white; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .cart-title { font-size: 16px; font-weight: 700; }
+  .cart-close { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+  .cart-items { flex: 1; overflow-y: auto; padding: 16px; }
+  .cart-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #EEE; }
+  .cart-item-img { width: 48px; height: 48px; background: #F8F8F8; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+  .cart-item-info { flex: 1; }
+  .cart-item-name { font-size: 12px; color: #0F1111; line-height: 1.3; margin-bottom: 4px; }
+  .cart-item-price { font-size: 14px; font-weight: 700; }
+  .cart-item-qty { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .qty-btn { background: #F0F2F2; border: 1px solid #D5D9D9; border-radius: 3px; width: 24px; height: 24px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+  .qty-btn:hover { background: #E3E6E6; }
+  .qty-val { font-size: 13px; font-weight: 600; min-width: 20px; text-align: center; }
+  .cart-remove { color: #007185; font-size: 11px; cursor: pointer; margin-top: 2px; display: block; }
+  .cart-remove:hover { color: #C7511F; text-decoration: underline; }
+  .cart-footer { padding: 16px; border-top: 2px solid #EEE; }
+  .cart-subtotal { display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+  .cart-checkout-btn { width: 100%; background: #FFD814; border: 1px solid #FCD200; border-radius: 20px; padding: 10px; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 8px; }
+  .cart-checkout-btn:hover { background: #F7CA00; }
+  .cart-return-btn { width: 100%; background: #131921; color: #FF9900; border: 2px solid #FF9900; border-radius: 20px; padding: 10px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .cart-return-btn:hover { background: #232F3E; }
+  .cart-return-note { font-size: 10px; color: #666; text-align: center; margin-top: 6px; }
+
+  /* CART ICON in header */
+  .cart-icon-btn { background: none; border: none; color: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; padding: 4px 8px; position: relative; }
+  .cart-count { position: absolute; top: 0; right: 4px; background: #FF9900; color: #131921; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .cart-icon-btn span { font-size: 11px; }
+
+  /* SUCCESS OVERLAY */
+  .success-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+  .success-overlay.show { display: flex; }
+  .success-box { background: white; border-radius: 12px; padding: 40px; max-width: 480px; width: 90%; text-align: center; }
+  .success-icon { font-size: 56px; margin-bottom: 16px; }
+  .success-title { font-size: 22px; font-weight: 700; color: #0F1111; margin-bottom: 8px; }
+  .success-sub { font-size: 14px; color: #555; margin-bottom: 20px; line-height: 1.5; }
+  .success-pr { background: #F0F8FF; border: 1px solid #B3D9EE; border-radius: 8px; padding: 16px; margin-bottom: 20px; text-align: left; }
+  .success-pr-label { font-size: 10px; color: #005276; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+  .success-pr-id { font-size: 20px; font-weight: 700; color: #007185; font-family: monospace; }
+  .success-detail { font-size: 12px; color: #555; margin-top: 4px; }
+  .success-btn { background: #131921; color: #FF9900; border: none; border-radius: 8px; padding: 12px 32px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .success-btn:hover { background: #232F3E; }
+
+  /* LOADING */
+  .loading-bar { height: 3px; background: linear-gradient(90deg, #FF9900, #FFD814, #FF9900); background-size: 200%; animation: loading 1.5s linear infinite; position: fixed; top: 0; left: 0; right: 0; z-index: 999; display: none; }
+  .loading-bar.show { display: block; }
+  @keyframes loading { 0%{background-position:0%} 100%{background-position:200%} }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: #DDD; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="loading-bar" id="loading-bar"></div>
+
+<!-- AMAZON HEADER -->
+<div class="amz-header">
+  <div class="amz-top">
+    <div class="amz-logo">amazon<span>.com</span><span class="amz-business-badge">BUSINESS</span></div>
+    <div class="amz-search">
+      <select class="amz-search-cat"><option>All</option><option>Office</option><option>Electronics</option></select>
+      <input type="text" id="search-input" placeholder="Search Amazon Business..." value="office supplies"/>
+      <button class="amz-search-btn">🔍</button>
+    </div>
+    <button class="cart-icon-btn" onclick="toggleCart()">
+      🛒
+      <span class="cart-count" id="cart-count">0</span>
+      <span>Cart</span>
+    </button>
+  </div>
+  <div class="amz-nav">
+    <a href="#">All</a>
+    <a href="#">Business Prime</a>
+    <a href="#">Office Supplies</a>
+    <a href="#">Technology</a>
+    <a href="#">Janitorial</a>
+    <a href="#">Furniture</a>
+    <a href="#">Food Service</a>
+    <a href="#" style="color:#FF9900;font-weight:600">Punchout Session Active ●</a>
+  </div>
+</div>
+
+<!-- PUNCHOUT BANNER -->
+<div class="punchout-banner">
+  <div class="pb-left">
+    <div class="pb-icon">⚡</div>
+    <div class="pb-text">
+      <strong>Elementum Punchout Session Active</strong>
+      <span>Items added to cart will be sent back to Elementum for approval & requisition creation</span>
+    </div>
+  </div>
+  <div class="pb-session" id="session-display">Session: loading...</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Department</div>
+      <a class="sidebar-item active">Office Products</a>
+      <a class="sidebar-item">Writing Supplies</a>
+      <a class="sidebar-item">Paper & Notebooks</a>
+      <a class="sidebar-item">Desk Accessories</a>
+      <a class="sidebar-item">Technology</a>
+      <a class="sidebar-item">Breakroom Supplies</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Price</div>
+      <a class="sidebar-item">Under $10</a>
+      <a class="sidebar-item">$10 – $25</a>
+      <a class="sidebar-item">$25 – $50</a>
+      <a class="sidebar-item">$50 & Above</a>
+      <div class="price-range">
+        <input placeholder="Min"/><span>–</span><input placeholder="Max"/>
+        <button>Go</button>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Brand</div>
+      <a class="sidebar-item">AmazonBasics</a>
+      <a class="sidebar-item">BIC</a>
+      <a class="sidebar-item">Staples</a>
+      <a class="sidebar-item">Post-it</a>
+      <a class="sidebar-item">Pilot</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Business Features</div>
+      <a class="sidebar-item">✓ Business Pricing</a>
+      <a class="sidebar-item">✓ Quantity Discounts</a>
+      <a class="sidebar-item">✓ Tax Exempt Eligible</a>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="results-bar">
+      <div class="results-count">1-12 of <strong>4,832 results</strong> for <strong>"office supplies"</strong></div>
+      <select class="sort-select">
+        <option>Sort by: Featured</option>
+        <option>Price: Low to High</option>
+        <option>Price: High to Low</option>
+        <option>Avg. Customer Review</option>
+      </select>
+    </div>
+
+    <div class="product-grid" id="product-grid">
+      <!-- Products injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- CART PANEL -->
+<div class="cart-panel" id="cart-panel">
+  <div class="cart-header">
+    <div class="cart-title">🛒 Shopping Cart</div>
+    <button class="cart-close" onclick="toggleCart()">✕</button>
+  </div>
+  <div class="cart-items" id="cart-items">
+    <div style="text-align:center;color:#999;font-size:13px;padding:40px 0">Your cart is empty</div>
+  </div>
+  <div class="cart-footer">
+    <div class="cart-subtotal">
+      <span>Subtotal:</span>
+      <span id="cart-total">$0.00</span>
+    </div>
+    <button class="cart-return-btn" onclick="returnCartToElementum()">
+      ⚡ Submit to Elementum →
+    </button>
+    <div class="cart-return-note">Cart will be sent back to Elementum for approval workflow</div>
+  </div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="success-overlay">
+  <div class="success-box">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Cart Submitted to Elementum!</div>
+    <div class="success-sub">Your cart has been sent back to Elementum. A purchase requisition has been created automatically and is being processed by the AI orchestration engine.</div>
+    <div class="success-pr" id="success-pr-box">
+      <div class="success-pr-label">Requisition Created</div>
+      <div class="success-pr-id" id="success-pr-id">PR-XXXXXXXX</div>
+      <div class="success-detail" id="success-pr-detail">Loading...</div>
+    </div>
+    <button class="success-btn" onclick="goBackToElementum()">← Return to Elementum</button>
+  </div>
+</div>
+
+<script>
+// ─── URL params ───────────────────────────────────────────────────────────
+const params     = new URLSearchParams(window.location.search);
+const SESSION_ID = params.get('session')   || params.get('record_id') || 'DEMO-SESSION';
+const RECORD_ID  = params.get('record_id') || params.get('session')   || 'DEMO-SESSION';
+const TOKEN      = params.get('token')     || 'demo-token';
+const USER       = params.get('user')      || 'user';
+// Auto-detects whether running on Vercel or localhost
+const ELEMENTUM = window.location.hostname === 'localhost'
+  ? 'http://localhost:8000'
+  : '';  // On Vercel, same domain
+
+// ── Elementum API config ─────────────────────────────────────────────────
+const ELEMENTUM_API_BASE    = 'https://api.elementum.io/v1';
+const ELEMENTUM_RECORD_TYPE = 'apps';
+const ELEMENTUM_ALIAS       = 'purchaserequests';
+const ELEMENTUM_CLIENT_ID   = 'd0915e212254e98514012b0e15df7e4d';
+const ELEMENTUM_CLIENT_SECRET = '37463afccdf454a802055009f2d0e600';
+const ELEMENTUM_TOKEN_URL   = 'https://api.elementum.io/oauth/token';
+
+// Fetch a fresh OAuth token — never hardcoded, never expires mid-demo
+async function getElementumToken() {
+  try {
+    const res = await fetch(ELEMENTUM_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `grant_type=client_credentials&client_id=${ELEMENTUM_CLIENT_ID}&client_secret=${ELEMENTUM_CLIENT_SECRET}&audience=https://api.elementum.io`,
+    });
+    const data = await res.json();
+    return data.access_token;
+  } catch (err) {
+    console.warn('Token fetch failed:', err);
+    return null;
+  }
+}
+
+document.getElementById('session-display').textContent = 'Session: ' + RECORD_ID;
+
+
+// ─── Products ─────────────────────────────────────────────────────────────
+const PRODUCTS = [
+  { id: 'B001', emoji: '🖊️', name: 'BIC Round Stic Ballpoint Pens, Medium Point, Black, 60-Count', price: 8.99,  unit: '/pack', rating: 4.7, reviews: 48203, delivery: 'FREE delivery Tomorrow', business_price: '$7.64 with Business Prime', asin: 'B0013CJRZU' },
+  { id: 'B002', emoji: '📓', name: 'Amazon Basics Wide Ruled Lined Spiral Notebook, 70 Sheet (6-Pack)', price: 14.99, unit: '/6-pack', rating: 4.6, reviews: 12840, delivery: 'FREE delivery Tomorrow', business_price: '$12.74 with Business Prime', asin: 'B00GS1QCF4', badge: 'Best Seller' },
+  { id: 'B003', emoji: '🗂️', name: 'Pendaflex Hanging File Folders, Letter Size, Assorted Colors, 25/Box', price: 19.99, unit: '/box', rating: 4.8, reviews: 8932, delivery: 'FREE delivery in 2 days', business_price: '$16.99 with Business Prime', asin: 'B0000ANN0V' },
+  { id: 'B004', emoji: '🖥️', name: 'HP 8.5x11 Copy Paper, 20lb, 92 Bright, 500 Sheets/1 Ream', price: 11.99, unit: '/ream', rating: 4.5, reviews: 31204, delivery: 'FREE delivery Tomorrow', business_price: '$10.19 / ream when buying 10+', asin: 'B001NSN3HG', badge: 'Business Choice' },
+  { id: 'B005', emoji: '🗒️', name: 'Post-it Notes, 3x3 in, 18 Pads, America\'s #1 Favorite Sticky Note', price: 13.49, unit: '/18-pack', rating: 4.8, reviews: 55012, delivery: 'FREE delivery Tomorrow', business_price: '$11.47 with Business Prime', asin: 'B00006JNNG', badge: 'Best Seller' },
+  { id: 'B006', emoji: '✂️', name: 'Scotch Heavy Duty Shipping Packaging Tape, 1.88" x 54.6 yd, 6-Pack', price: 16.49, unit: '/6-pack', rating: 4.7, reviews: 21033, delivery: 'FREE delivery in 2 days', business_price: '$14.02 with Business Prime', asin: 'B009BXPNMK' },
+  { id: 'B007', emoji: '📎', name: 'Advantus Binder Clips, Assorted Sizes, 200/Box', price: 7.99,  unit: '/box', rating: 4.6, reviews: 9821, delivery: 'FREE delivery Tomorrow', business_price: '$6.79 with Business Prime', asin: 'B0006HVB12' },
+  { id: 'B008', emoji: '🗃️', name: 'Smead Pressboard Classification File Folders, Letter Size, 10/Box', price: 29.99, unit: '/box', rating: 4.5, reviews: 4021, delivery: 'FREE delivery in 2 days', business_price: '$25.49 with Business Prime', asin: 'B00006IF0C' },
+  { id: 'B009', emoji: '🖱️', name: 'Logitech MK270 Wireless Keyboard and Mouse Combo', price: 24.99, unit: '/each', rating: 4.6, reviews: 87203, delivery: 'FREE delivery Tomorrow', business_price: '$21.24 with Business Prime', asin: 'B00BP5KOPA', badge: 'Best Seller' },
+  { id: 'B010', emoji: '🖨️', name: 'HP 67 Black/Tri-color Ink Cartridges (2-pack)', price: 34.99, unit: '/2-pack', rating: 4.4, reviews: 14032, delivery: 'FREE delivery Tomorrow', business_price: '$29.74 with Business Prime', asin: 'B08CJZGN29' },
+  { id: 'B011', emoji: '📏', name: 'Staples Economy 3-Ring View Binders, 1" Round Ring, 12/Pack', price: 22.99, unit: '/12-pack', rating: 4.5, reviews: 6120, delivery: 'FREE delivery in 2 days', business_price: '$19.54 with Business Prime', asin: 'B01NBXQKLT' },
+  { id: 'B012', emoji: '🧴', name: 'Purell Advanced Hand Sanitizer Refreshing Gel, 12 fl oz, 4-Pack', price: 18.99, unit: '/4-pack', rating: 4.8, reviews: 34201, delivery: 'FREE delivery Tomorrow', business_price: '$16.14 with Business Prime', asin: 'B00H5VB6EW' },
+];
+
+// ─── Cart state ───────────────────────────────────────────────────────────
+let cart = {};
+
+function renderProducts() {
+  const grid = document.getElementById('product-grid');
+  grid.innerHTML = PRODUCTS.map(p => `
+    <div class="product-card" id="card-${p.id}">
+      ${p.badge ? `<div class="product-badge ${p.badge === 'Business Choice' ? 'business' : ''}">${p.badge}</div>` : ''}
+      <div class="product-img">${p.emoji}</div>
+      <div class="product-title">${p.name}</div>
+      <div class="product-rating">
+        <span class="stars">${'★'.repeat(Math.floor(p.rating))}${'☆'.repeat(5-Math.floor(p.rating))}</span>
+        <span class="review-count">${p.reviews.toLocaleString()}</span>
+      </div>
+      <div class="product-price">$${p.price.toFixed(2)} <span class="product-price-unit">${p.unit}</span></div>
+      <div class="product-delivery">${p.delivery}</div>
+      <div class="product-business-price">💼 ${p.business_price}</div>
+      <button class="add-btn" id="btn-${p.id}" onclick="addToCart('${p.id}')">Add to Cart</button>
+    </div>
+  `).join('');
+}
+
+function addToCart(id) {
+  const product = PRODUCTS.find(p => p.id === id);
+  if (!product) return;
+
+  if (cart[id]) {
+    cart[id].qty++;
+  } else {
+    cart[id] = { ...product, qty: 1 };
+  }
+
+  // Update button
+  const btn = document.getElementById('btn-' + id);
+  btn.textContent = '✓ Added';
+  btn.classList.add('added');
+  setTimeout(() => {
+    btn.textContent = 'Add to Cart';
+    btn.classList.remove('added');
+  }, 1500);
+
+  updateCartUI();
+  if (!document.getElementById('cart-panel').classList.contains('open')) {
+    toggleCart();
+  }
+}
+
+function updateCartUI() {
+  const items    = Object.values(cart);
+  const total    = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const count    = items.reduce((s, i) => s + i.qty, 0);
+
+  document.getElementById('cart-count').textContent = count;
+  document.getElementById('cart-total').textContent = '$' + total.toFixed(2);
+
+  const container = document.getElementById('cart-items');
+  if (items.length === 0) {
+    container.innerHTML = '<div style="text-align:center;color:#999;font-size:13px;padding:40px 0">Your cart is empty</div>';
+    return;
+  }
+
+  container.innerHTML = items.map(item => `
+    <div class="cart-item" id="ci-${item.id}">
+      <div class="cart-item-img">${item.emoji}</div>
+      <div class="cart-item-info">
+        <div class="cart-item-name">${item.name.substring(0, 60)}...</div>
+        <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
+        <div class="cart-item-qty">
+          <button class="qty-btn" onclick="changeQty('${item.id}', -1)">−</button>
+          <span class="qty-val">${item.qty}</span>
+          <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
+        </div>
+        <span class="cart-remove" onclick="removeFromCart('${item.id}')">Remove</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function changeQty(id, delta) {
+  if (!cart[id]) return;
+  cart[id].qty += delta;
+  if (cart[id].qty <= 0) delete cart[id];
+  updateCartUI();
+}
+
+function removeFromCart(id) {
+  delete cart[id];
+  updateCartUI();
+}
+
+function toggleCart() {
+  document.getElementById('cart-panel').classList.toggle('open');
+}
+
+// ─── Return cart to Elementum ─────────────────────────────────────────────
+// Calls our backend endpoint which handles:
+//   1. Fresh OAuth token from Elementum
+// Step 1: Fetch fresh OAuth token from Elementum
+// Step 2: PUT cart data to Elementum with Stage: "Cart Received"
+// Step 3: POST to our local API to create the PR record
+async function returnCartToElementum() {
+  const items = Object.values(cart);
+  if (items.length === 0) {
+    alert('Your cart is empty! Add some items first.');
+    return;
+  }
+
+  const total   = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const loading = document.getElementById('loading-bar');
+  loading.classList.add('show');
+
+  // Primary item for description
+  const primaryItem = items.reduce((a, b) => (a.price * a.qty > b.price * b.qty ? a : b));
+  const itemDesc    = items.length === 1
+    ? primaryItem.name
+    : `${primaryItem.name} + ${items.length - 1} more item(s)`;
+
+  // ── Step 1: Get fresh OAuth token ─────────────────────────────────────
+  const token = await getElementumToken();
+
+  // ── Step 2: PUT to Elementum API (Tim's contract) ─────────────────────
+  // This is what triggers the procurement automation on Tim's side
+  const elementumPayload = {
+    "Vendor":           "Amazon Business",
+    "Item Description": itemDesc,
+    "Quantity":         items.reduce((s, i) => s + i.qty, 0),
+    "Unit Price":       primaryItem.price,
+    "Total Amount":     parseFloat(total.toFixed(2)),
+    "Currency":         "USD",
+    "Stage":            "Cart Received",
+  };
+
+  const elementumUrl = `${ELEMENTUM_API_BASE}/${ELEMENTUM_RECORD_TYPE}/${ELEMENTUM_ALIAS}/${RECORD_ID}`;
+  console.log('PUT to Elementum:', elementumUrl, elementumPayload);
+
+  if (token) {
+    fetch(elementumUrl, {
+      method:  'PUT',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(elementumPayload),
+    })
+    .then(r => r.json())
+    .then(d => console.log('Elementum PUT response:', d))
+    .catch(e => console.warn('Elementum PUT failed:', e));
+  } else {
+    console.warn('No token — skipping Elementum PUT (will work once OAuth is live)');
+  }
+
+  // ── Step 3: POST to our local/Vercel API to create the PR ────────────
+  let prId   = 'PR-' + Date.now().toString().slice(-6);
+  let aiNote = `$${total.toFixed(2)} · ${items.length} item(s) · Submitted to Elementum`;
+
+  try {
+    const localPayload = {
+      session_id: SESSION_ID,
+      items: items.map(i => ({
+        name:       i.name,
+        qty:        i.qty,
+        price:      i.price,
+        asin:       i.asin,
+        total_line: parseFloat((i.price * i.qty).toFixed(2)),
+      })),
+      total: parseFloat(total.toFixed(2)),
+    };
+
+    const res  = await fetch(`${ELEMENTUM}/api/punchout/cart-return`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(localPayload),
+    });
+    const data = await res.json();
+    prId   = data.pr_id   || prId;
+    aiNote = data.ai_note || aiNote;
+    console.log('Local cart-return response:', data);
+  } catch (err) {
+    console.warn('Local API offline — showing demo success');
+  }
+
+  loading.classList.remove('show');
+
+  // Build redirect URL to PR confirmation page with all data baked in
+  const itemsForUrl = Object.values(cart).map(i => ({
+    name:  i.name,
+    qty:   i.qty,
+    price: i.price,
+  }));
+
+  const confirmUrl = `/pr-confirmation.html?` + new URLSearchParams({
+    pr:        prId,
+    total:     total.toFixed(2),
+    vendor:    'Amazon Business',
+    requester: USER || 'Tim Kim',
+    record_id: RECORD_ID,
+    items:     JSON.stringify(itemsForUrl),
+  }).toString();
+
+  // Redirect to confirmation page
+  window.location.href = confirmUrl;
+}
+
+function goBackToElementum() {
+  // Deep link back to the specific record in Elementum
+  window.location.href = `https://dev-se.elementum.io/apps/purchaserequests/${RECORD_ID}`;
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────
+renderProducts();
+
+// ── Pre-populate cart from agent if items were passed ────────────────────
+// Runs after PRODUCTS is defined so matching works correctly.
+// When Tim's agent calls /punchout/initiate with items=[...],
+// they get baked into the URL and auto-added to the cart here.
+const prefillParam = params.get('prefill');
+if (prefillParam) {
+  try {
+    const prefillItems = JSON.parse(decodeURIComponent(prefillParam));
+    prefillItems.forEach(item => {
+      const match = PRODUCTS.find(p =>
+        p.name.toLowerCase().includes((item.name || '').toLowerCase())
+      );
+      const cartItem = match || {
+        id:             'AGENT-' + Math.random().toString(36).slice(2,6).toUpperCase(),
+        emoji:          '📦',
+        name:           item.name || 'Item from Elementum',
+        price:          parseFloat(item.price) || 9.99,
+        unit:           '/each',
+        asin:           'AGENT',
+        rating:         4.5,
+        reviews:        0,
+        delivery:       'FREE delivery Tomorrow',
+        business_price: 'Business pricing applied',
+      };
+      const qty = parseInt(item.qty) || 1;
+      if (cart[cartItem.id]) {
+        cart[cartItem.id].qty += qty;
+      } else {
+        cart[cartItem.id] = { ...cartItem, qty };
+      }
+    });
+    // Open cart automatically with pre-filled items
+    setTimeout(() => {
+      updateCartUI();
+      document.getElementById('cart-panel').classList.add('open');
+    }, 600);
+  } catch(e) {
+    console.warn('Could not parse prefill items:', e);
+  }
+}
+</script>
+</body>
+</html>
