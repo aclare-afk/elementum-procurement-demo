@@ -15,10 +15,11 @@ export default function handler(req, res) {
 
   // POST — create a new PR (Tim's contract)
   if (req.method === 'POST') {
-    const { requester, item, amount, record_id } = req.body;
-    if (!requester || !item || amount === undefined) {
-      return res.status(400).json({ error: 'requester, item, and amount are required' });
-    }
+    const { record_id } = req.body;
+    // Handle null strings from Tim's system while his app is still being built
+    const requester = req.body.requester && req.body.requester !== "null" ? req.body.requester : "Elementum User";
+    const item      = req.body.item      && req.body.item      !== "null" ? req.body.item      : "Procurement Request";
+    const amount    = req.body.amount    && req.body.amount    !== "null" ? parseFloat(req.body.amount) : 0;
 
     const prNumber = genId("PR");
     const policy   = aiPolicyCheck(amount, "amazon");
