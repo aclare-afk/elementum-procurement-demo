@@ -19,6 +19,10 @@
     {
       "source": "/procurement",
       "destination": "/procurement.html"
+    },
+    {
+      "source": "/",
+      "destination": "/amazon-mock.html"
     }
   ]
 }
