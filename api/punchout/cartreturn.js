@@ -14,8 +14,21 @@ export default function handler(req, res) {
     return res.status(400).json({ error: 'session_id, items, and total are required' });
   }
 
-  const flow = store.flowSessions.find(s => s.flow_id === session_id);
-  if (!flow) return res.status(404).json({ error: `Flow session ${session_id} not found` });
+  // Find or create a flow session — handles direct Amazon mock access without prior flow
+  let flow = store.flowSessions.find(s => s.flow_id === session_id);
+  if (!flow) {
+    flow = {
+      flow_id:         session_id,
+      user_id:         req.body.user || "user",
+      status:          "PUNCHOUT_ACTIVE",
+      vendor_id:       "amazon",
+      request_text:    "Procurement request",
+      budget_category: "Office Supplies",
+      created_at:      new Date().toISOString(),
+      pr_id:           null,
+    };
+    store.flowSessions.push(flow);
+  }
 
   const prId   = genId("PR");
   const policy = aiPolicyCheck(total, flow.vendor_id || "amazon");
