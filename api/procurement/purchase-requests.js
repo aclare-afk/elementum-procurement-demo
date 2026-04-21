@@ -20,6 +20,7 @@ export default function handler(req, res) {
     const requester = req.body.requester && req.body.requester !== "null" ? req.body.requester : "Elementum User";
     const item      = req.body.item      && req.body.item      !== "null" ? req.body.item      : "Procurement Request";
     const amount    = req.body.amount    && req.body.amount    !== "null" ? parseFloat(req.body.amount) : 0;
+    const quantity  = req.body.quantity  && req.body.quantity  !== "null" ? parseInt(req.body.quantity)  : 1;
 
     const prNumber = genId("PR");
     const policy   = aiPolicyCheck(amount, "amazon");
@@ -33,6 +34,7 @@ export default function handler(req, res) {
       vendor_name:  "Amazon Business",
       vendor_id:    "amazon",
       amount,
+      quantity,
       requestor:    requester,
       status:       "pending_approval",
       ai_policy:    policy,
