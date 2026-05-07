@@ -10,12 +10,12 @@
 
 import { cors } from '../lib/store.js';
 
-const CLIENT_ID     = 'd8403f5d400bd365ea34b5f350884778';
-const CLIENT_SECRET = 'afb3527ab915664e82a60fe92083bc97';
+const CLIENT_ID     = 'd0915e212254e98514012b0e15df7e4d';
+const CLIENT_SECRET = '37463afccdf454a802055009f2d0e600';
 const TOKEN_URL     = 'https://api.elementum.io/oauth/token';
 const API_BASE      = 'https://api.elementum.io/v1';
 const RECORD_TYPE   = 'apps';
-const ALIAS         = 'purchaserequests';
+const ALIAS         = 'purchasereqmngmnt';
 
 async function getToken() {
   const res = await fetch(TOKEN_URL, {
