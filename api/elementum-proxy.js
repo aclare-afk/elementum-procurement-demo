@@ -1,11 +1,11 @@
 // POST /api/elementum-proxy
-// Proxies the cart data PUT to Elementum API server-side.
+// Proxies cart data to Elementum via GraphQL mutation (aspectRecordUpdate).
 // This avoids CORS issues that occur when calling api.elementum.io from the browser.
 //
 // Request body:
 // {
-//   "record_id": "PRCRQ-30",
-//   "payload": { "Vendor": "...", "Item Description": "...", ... }
+//   "record_id": "PREQ-10",
+//   "payload": { "<fieldId>": "<value>", ... }
 // }
 
 import { cors } from '../lib/store.js';
@@ -13,9 +13,30 @@ import { cors } from '../lib/store.js';
 const CLIENT_ID     = 'd0915e212254e98514012b0e15df7e4d';
 const CLIENT_SECRET = '37463afccdf454a802055009f2d0e600';
 const TOKEN_URL     = 'https://api.elementum.io/oauth/token';
-const API_BASE      = 'https://api.elementum.io/v1';
-const RECORD_TYPE   = 'apps';
-const ALIAS         = 'purchasereqmngmnt';
+const GRAPHQL_URL   = 'https://api.elementum.io/graphql';
+const ASPECT_ID     = '70dd3608-9f1f-4cae-8677-0a9217fe7538';
+
+// Stage picklist option UUIDs (from StageDisplayBlock_UpdateStageIdMutation observed in network)
+const STAGE_IDS = {
+  'Intake':        '3e0806db-f50f-429c-a3d1-159369547941',
+  'Shopping':      '2a8827ce-260f-4e1a-9291-a3c95a661a26',
+  'Cart Received': '201f20b2-bc3c-42ee-8bab-7e2f506a6906',
+  'Complete':      '75beb257-21aa-4d6e-84ad-e45d16d5b529',
+};
+
+const STAGE_FIELD_ID = '04caec9a-de87-4e92-aa91-86a017c5ba8e';
+
+const MUTATION = `
+  mutation UpdateRecord($id: ID!, $data: AspectRecordData!) {
+    aspectRecordUpdate(id: $id, input: $data) {
+      __typename
+      id
+      ... on AppRecord {
+        stage { id }
+      }
+    }
+  }
+`;
 
 async function getToken() {
   const res = await fetch(TOKEN_URL, {
@@ -39,31 +60,42 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Step 1: Get fresh token server-side (no CORS issues here)
     const token = await getToken();
 
-    // Step 2: PUT to Elementum with the cart payload
-    const ASPECT_ID = "70dd3608-9f1f-4cae-8677-0a9217fe7538";
-    const fullRecordId = record_id.includes(":") ? record_id : `${ASPECT_ID}:${record_id}`;
-    const elementumUrl = `${API_BASE}/${RECORD_TYPE}/${ALIAS}/${fullRecordId}`;
-    console.log('Proxying PUT to Elementum:', elementumUrl, payload);
+    // Build the full record ID: aspectId:handle
+    const fullRecordId = record_id.includes(':') ? record_id : `${ASPECT_ID}:${record_id}`;
 
-    const putRes  = await fetch(elementumUrl, {
-      method:  'PUT',
+    // Remap Stage string value to its UUID if present
+    const data = { ...payload };
+    if (data[STAGE_FIELD_ID] && typeof data[STAGE_FIELD_ID] === 'string') {
+      const stageUUID = STAGE_IDS[data[STAGE_FIELD_ID]];
+      if (stageUUID) data[STAGE_FIELD_ID] = stageUUID;
+    }
+
+    console.log('Calling GraphQL mutation for record:', fullRecordId, data);
+
+    const gqlRes = await fetch(GRAPHQL_URL, {
+      method:  'POST',
       headers: {
         'Content-Type':  'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        query:     MUTATION,
+        variables: { id: fullRecordId, data },
+      }),
     });
 
-    const putData = await putRes.json();
-    console.log('Elementum PUT response:', putData);
+    const gqlData = await gqlRes.json();
+    console.log('Elementum GraphQL response:', JSON.stringify(gqlData));
+
+    if (gqlData.errors) {
+      return res.status(400).json({ success: false, errors: gqlData.errors });
+    }
 
     return res.status(200).json({
       success:   true,
-      status:    putRes.status,
-      elementum: putData,
+      elementum: gqlData.data,
     });
 
   } catch (err) {
