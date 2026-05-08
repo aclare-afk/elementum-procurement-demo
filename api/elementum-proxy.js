@@ -10,8 +10,8 @@
 
 import { cors } from '../lib/store.js';
 
-const CLIENT_ID     = 'a1b36864d082d06eb6fd1cc545d3633f';
-const CLIENT_SECRET = '40c4536700f9f3bcc10f5b518ba43a02';
+const CLIENT_ID     = 'a2f93de77e2619cf38b5e567addf3041';
+const CLIENT_SECRET = 'b16bc05979e853262b38f53d1011b766';
 const TOKEN_URL     = 'https://api.elementum.io/oauth/token';
 const API_BASE      = 'https://api.elementum.io/v1';
 const ALIAS         = 'purchasereqmngmnt';
