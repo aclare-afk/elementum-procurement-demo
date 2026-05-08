@@ -1,22 +1,16 @@
 // POST /api/elementum-proxy
 // Proxies cart data to Elementum via GraphQL mutation (aspectRecordUpdate).
 // This avoids CORS issues that occur when calling api.elementum.io from the browser.
-//
-// Request body:
-// {
-//   "record_id": "PREQ-10",
-//   "payload": { "<fieldId>": "<value>", ... }
-// }
 
 import { cors } from '../lib/store.js';
 
-const CLIENT_ID     = 'd0915e212254e98514012b0e15df7e4d';
-const CLIENT_SECRET = '37463afccdf454a802055009f2d0e600';
+const CLIENT_ID     = 'a2f93de77e2619cf38b5e567addf3041';
+const CLIENT_SECRET = 'b16bc05979e853262b38f53d1011b766';
 const TOKEN_URL     = 'https://api.elementum.io/oauth/token';
 const GRAPHQL_URL   = 'https://api.elementum.io/graphql';
 const ASPECT_ID     = '70dd3608-9f1f-4cae-8677-0a9217fe7538';
 
-// Stage picklist option UUIDs (from StageDisplayBlock_UpdateStageIdMutation observed in network)
+// Stage picklist option UUIDs
 const STAGE_IDS = {
   'Intake':        '3e0806db-f50f-429c-a3d1-159369547941',
   'Shopping':      '2a8827ce-260f-4e1a-9291-a3c95a661a26',
@@ -62,7 +56,6 @@ export default async function handler(req, res) {
   try {
     const token = await getToken();
 
-    // Build the full record ID: aspectId:handle
     const fullRecordId = record_id.includes(':') ? record_id : `${ASPECT_ID}:${record_id}`;
 
     // Remap Stage string value to its UUID if present
