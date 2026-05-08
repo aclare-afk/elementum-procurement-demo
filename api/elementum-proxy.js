@@ -43,7 +43,9 @@ export default async function handler(req, res) {
     const token = await getToken();
 
     // Step 2: PUT to Elementum with the cart payload
-    const elementumUrl = `${API_BASE}/${RECORD_TYPE}/${ALIAS}/${record_id}`;
+    const ASPECT_ID = "70dd3608-9f1f-4cae-8677-0a9217fe7538";
+    const fullRecordId = record_id.includes(":") ? record_id : `${ASPECT_ID}:${record_id}`;
+    const elementumUrl = `${API_BASE}/${RECORD_TYPE}/${ALIAS}/${fullRecordId}`;
     console.log('Proxying PUT to Elementum:', elementumUrl, payload);
 
     const putRes  = await fetch(elementumUrl, {
