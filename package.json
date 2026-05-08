@@ -3,5 +3,8 @@
   "version": "1.0.0",
   "description": "Elementum AI Procurement Orchestration Demo",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@upstash/redis": "^1.34.3"
+  }
 }
