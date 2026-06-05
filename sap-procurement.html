@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Procurement System — Purchase Requisitions</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Courier New', Courier, monospace; font-size: 12px; background: #f0f0f0; color: #000; }
+
+  /* ── SAP-style top bar ── */
+  .sap-header { background: #1a3a5c; color: white; padding: 0; }
+  .sap-topbar { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; background: #1a3a5c; border-bottom: 1px solid #0d2540; }
+  .sap-logo { font-size: 16px; font-weight: bold; color: #fff; letter-spacing: 2px; font-family: Arial, sans-serif; }
+  .sap-logo span { color: #7ec8e3; }
+  .sap-user { font-size: 11px; color: #aac; display: flex; gap: 16px; }
+  .sap-nav { background: #2a5a8c; display: flex; gap: 0; border-bottom: 2px solid #0d2540; }
+  .sap-nav-item { padding: 5px 14px; font-size: 11px; color: #cce; cursor: pointer; border-right: 1px solid #1a4a7c; font-family: Arial, sans-serif; }
+  .sap-nav-item:hover { background: #1a4a7c; color: white; }
+  .sap-nav-item.active { background: #f0f0f0; color: #000; font-weight: bold; border-bottom: 2px solid #f0f0f0; margin-bottom: -2px; }
+
+  /* ── Transaction bar ── */
+  .txn-bar { background: #e8e8e8; border-bottom: 1px solid #999; padding: 3px 8px; display: flex; align-items: center; gap: 8px; }
+  .txn-code { background: white; border: 1px solid #999; padding: 2px 6px; font-size: 11px; font-family: 'Courier New'; width: 80px; }
+  .txn-btn { background: #e0e0e0; border: 1px solid #888; padding: 2px 8px; font-size: 11px; cursor: pointer; font-family: Arial, sans-serif; }
+  .txn-btn:hover { background: #d0d0d0; }
+  .txn-label { font-size: 11px; color: #444; font-family: Arial, sans-serif; margin-left: 8px; }
+
+  /* ── Toolbar ── */
+  .toolbar { background: #d4d4d4; border-bottom: 1px solid #aaa; padding: 2px 4px; display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+  .tb-btn { background: #e8e8e8; border: 1px solid #aaa; padding: 2px 6px; font-size: 11px; cursor: pointer; font-family: Arial, sans-serif; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+  .tb-btn:hover { background: #d8d8d8; border-color: #666; }
+  .tb-btn:active { background: #c8c8c8; }
+  .tb-sep { width: 1px; height: 18px; background: #aaa; margin: 0 2px; }
+  .tb-icon { font-size: 12px; }
+
+  /* ── Page title ── */
+  .page-title { background: #f0f0f0; padding: 6px 12px; border-bottom: 1px solid #ccc; }
+  .page-title h1 { font-size: 14px; font-weight: bold; font-family: Arial, sans-serif; color: #1a3a5c; }
+  .page-title .txn-ref { font-size: 10px; color: #666; font-family: Arial, sans-serif; }
+
+  /* ── Selection screen ── */
+  .selection-screen { background: white; border: 1px solid #ccc; margin: 8px; padding: 0; }
+  .sel-title { background: #dce8f0; border-bottom: 1px solid #aac; padding: 4px 8px; font-size: 11px; font-weight: bold; font-family: Arial, sans-serif; color: #1a3a5c; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .sel-title::before { content: '▼'; font-size: 9px; }
+  .sel-body { padding: 8px 12px; }
+  .sel-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .sel-label { font-size: 11px; font-family: Arial, sans-serif; color: #333; width: 160px; flex-shrink: 0; }
+  .sel-input { border: 1px solid #aaa; padding: 2px 4px; font-size: 11px; font-family: 'Courier New'; width: 180px; background: white; }
+  .sel-input:focus { outline: 1px solid #1a3a5c; }
+  .sel-to { font-size: 11px; font-family: Arial; color: #666; margin: 0 4px; }
+  .sel-check { margin-right: 4px; }
+  .sel-check-label { font-size: 11px; font-family: Arial, sans-serif; }
+
+  /* ── ALV Grid (results) ── */
+  .alv-container { margin: 0 8px 8px; border: 1px solid #aaa; }
+  .alv-toolbar { background: #dce8f0; border-bottom: 1px solid #aac; padding: 3px 6px; display: flex; align-items: center; gap: 4px; }
+  .alv-title { font-size: 11px; font-weight: bold; font-family: Arial, sans-serif; color: #1a3a5c; flex: 1; }
+  .alv-count { font-size: 10px; color: #666; font-family: Arial, sans-serif; }
+  .alv-table { width: 100%; border-collapse: collapse; background: white; font-size: 11px; }
+  .alv-table thead tr { background: #dce8f0; }
+  .alv-table th { border: 1px solid #bbb; padding: 3px 6px; text-align: left; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; color: #1a3a5c; white-space: nowrap; cursor: pointer; user-select: none; }
+  .alv-table th:hover { background: #c8d8e8; }
+  .alv-table th.sorted-asc::after { content: ' ▲'; font-size: 9px; }
+  .alv-table th.sorted-desc::after { content: ' ▼'; font-size: 9px; }
+  .alv-table td { border: 1px solid #ddd; padding: 2px 6px; font-family: 'Courier New', monospace; font-size: 11px; white-space: nowrap; }
+  .alv-table tr:hover td { background: #e8f0f8 !important; }
+  .alv-table tr.selected td { background: #b8d0e8 !important; }
+  .alv-table tr:nth-child(even) td { background: #f8f8f8; }
+
+  /* Status indicators */
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+  .status-new { background: #1a7a1a; }
+  .status-pending { background: #cc8800; }
+  .status-approved { background: #1a5a9a; }
+  .status-complete { background: #888; }
+  .status-text { font-family: Arial, sans-serif; font-size: 10px; }
+
+  /* PR Number link style */
+  .pr-link { color: #1a3a8c; text-decoration: underline; cursor: pointer; font-family: 'Courier New'; }
+  .pr-link:hover { color: #cc0000; }
+
+  /* ── Detail panel ── */
+  .detail-panel { display: none; margin: 0 8px 8px; background: white; border: 1px solid #aaa; }
+  .detail-panel.open { display: block; }
+  .detail-header { background: #dce8f0; border-bottom: 1px solid #aac; padding: 4px 8px; display: flex; align-items: center; justify-content: space-between; }
+  .detail-header h2 { font-size: 12px; font-family: Arial, sans-serif; font-weight: bold; color: #1a3a5c; }
+  .detail-close { cursor: pointer; font-size: 14px; color: #666; border: 1px solid #aaa; background: #e8e8e8; padding: 0 4px; font-family: Arial; }
+  .detail-close:hover { background: #d0d0d0; }
+  .detail-tabs { background: #e8e8e8; border-bottom: 1px solid #aaa; display: flex; }
+  .detail-tab { padding: 4px 12px; font-size: 11px; font-family: Arial, sans-serif; cursor: pointer; border-right: 1px solid #aaa; }
+  .detail-tab.active { background: white; border-bottom: 1px solid white; margin-bottom: -1px; font-weight: bold; }
+  .detail-tab:hover:not(.active) { background: #d8d8d8; }
+  .detail-body { padding: 12px; }
+  .detail-section { margin-bottom: 12px; }
+  .detail-section-title { font-size: 11px; font-weight: bold; font-family: Arial, sans-serif; color: #1a3a5c; border-bottom: 1px solid #dce8f0; padding-bottom: 3px; margin-bottom: 8px; }
+  .detail-grid { display: grid; grid-template-columns: 160px 1fr 160px 1fr; gap: 4px 8px; }
+  .detail-label { font-size: 11px; font-family: Arial, sans-serif; color: #666; padding: 2px 0; }
+  .detail-value { font-size: 11px; font-family: 'Courier New'; color: #000; padding: 2px 4px; background: #f8f8f8; border: 1px solid #ddd; }
+  .detail-value.amount { color: #1a3a8c; font-weight: bold; }
+  .detail-value.status-new-v { color: #1a7a1a; font-weight: bold; }
+  .detail-value.status-submitted { color: #1a3a8c; font-weight: bold; }
+
+  /* ── Status bar ── */
+  .status-bar { background: #d4d4d4; border-top: 1px solid #aaa; padding: 2px 8px; display: flex; justify-content: space-between; font-size: 10px; font-family: Arial, sans-serif; color: #444; position: fixed; bottom: 0; left: 0; right: 0; }
+
+  /* ── Execute button area ── */
+  .exec-bar { background: #e8e8e8; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 6px 12px; display: flex; gap: 8px; align-items: center; margin: 0 8px 8px; }
+  .exec-btn { background: #1a3a5c; color: white; border: 1px solid #0d2540; padding: 4px 16px; font-size: 12px; font-family: Arial, sans-serif; cursor: pointer; font-weight: bold; }
+  .exec-btn:hover { background: #2a5a8c; }
+  .cancel-btn { background: #e0e0e0; color: #333; border: 1px solid #aaa; padding: 4px 16px; font-size: 12px; font-family: Arial, sans-serif; cursor: pointer; }
+  .cancel-btn:hover { background: #d0d0d0; }
+
+  /* ── Message bar ── */
+  .msg-bar { margin: 0 8px 4px; padding: 4px 8px; font-size: 11px; font-family: Arial, sans-serif; display: none; }
+  .msg-bar.info { background: #e0f0e0; border: 1px solid #5a9a5a; color: #1a5a1a; display: flex; align-items: center; gap: 6px; }
+  .msg-bar.error { background: #ffe0e0; border: 1px solid #cc5555; color: #aa1111; display: flex; align-items: center; gap: 6px; }
+  .msg-bar.warning { background: #fff8e0; border: 1px solid #cc9933; color: #886611; display: flex; align-items: center; gap: 6px; }
+
+  /* PR URL clickable */
+  .pr-url-link { color: #1a3a8c; text-decoration: underline; cursor: pointer; font-size: 10px; font-family: Arial, sans-serif; word-break: break-all; }
+</style>
+</head>
+<body>
+
+<!-- SAP-style header -->
+<div class="sap-header">
+  <div class="sap-topbar">
+    <div class="sap-logo">PRO<span>CURE</span> &nbsp;<span style="font-size:10px;color:#aac;font-weight:normal;letter-spacing:0">Procurement Management System</span></div>
+    <div class="sap-user">
+      <span>User: ACLARE</span>
+      <span>Client: 100</span>
+      <span>Lang: EN</span>
+      <span id="sys-time"></span>
+    </div>
+  </div>
+  <div class="sap-nav">
+    <div class="sap-nav-item">Menu</div>
+    <div class="sap-nav-item">Back</div>
+    <div class="sap-nav-item">Exit</div>
+    <div class="sap-nav-item">Cancel</div>
+    <div class="sap-nav-item active">Purchase Requisitions</div>
+    <div class="sap-nav-item">Purchase Orders</div>
+    <div class="sap-nav-item">Vendors</div>
+    <div class="sap-nav-item">Reports</div>
+    <div class="sap-nav-item">Help</div>
+  </div>
+</div>
+
+<!-- Transaction bar -->
+<div class="txn-bar">
+  <input class="txn-code" value="ME5A" readonly/>
+  <button class="txn-btn">▶ Execute</button>
+  <button class="txn-btn">⟳ Refresh</button>
+  <span class="txn-label">List Display of Purchase Requisitions</span>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <button class="tb-btn"><span class="tb-icon">🔍</span> Find</button>
+  <button class="tb-btn"><span class="tb-icon">🖨</span> Print</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn"><span class="tb-icon">📋</span> Display</button>
+  <button class="tb-btn"><span class="tb-icon">✏️</span> Change</button>
+  <button class="tb-btn"><span class="tb-icon">➕</span> Create</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn"><span class="tb-icon">📤</span> Export</button>
+  <button class="tb-btn"><span class="tb-icon">📊</span> Layout</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="toggleSelection()"><span class="tb-icon">⚙</span> Selection</button>
+</div>
+
+<!-- Page title -->
+<div class="page-title">
+  <h1>Purchase Requisitions: List Display (ME5A)</h1>
+  <div class="txn-ref">Transaction ME5A · Procurement Module · All Company Codes</div>
+</div>
+
+<!-- Selection screen -->
+<div class="selection-screen" id="selection-screen">
+  <div class="sel-title" onclick="toggleSelection()">Selection Criteria</div>
+  <div class="sel-body">
+    <div class="sel-row">
+      <span class="sel-label">Purchasing Group</span>
+      <input class="sel-input" placeholder="e.g. 001" id="sel-pgrp"/>
+      <span class="sel-to">to</span>
+      <input class="sel-input" placeholder="" style="width:120px"/>
+    </div>
+    <div class="sel-row">
+      <span class="sel-label">Requisitioner</span>
+      <input class="sel-input" placeholder="e.g. TIM KIM" id="sel-req"/>
+      <span class="sel-to">to</span>
+      <input class="sel-input" placeholder="" style="width:120px"/>
+    </div>
+    <div class="sel-row">
+      <span class="sel-label">Material Group</span>
+      <input class="sel-input" placeholder="e.g. OFFICE" id="sel-matgrp"/>
+    </div>
+    <div class="sel-row">
+      <span class="sel-label">PR Number</span>
+      <input class="sel-input" placeholder="e.g. PRCRQ-30" id="sel-prnum"/>
+      <span class="sel-to">to</span>
+      <input class="sel-input" placeholder="" style="width:120px"/>
+    </div>
+    <div class="sel-row" style="margin-top:8px">
+      <input type="checkbox" class="sel-check" checked id="chk-open"/>
+      <span class="sel-check-label">Open Requisitions</span>
+      &nbsp;&nbsp;
+      <input type="checkbox" class="sel-check" id="chk-closed"/>
+      <span class="sel-check-label">Closed Requisitions</span>
+      &nbsp;&nbsp;
+      <input type="checkbox" class="sel-check" checked id="chk-released"/>
+      <span class="sel-check-label">Released Only</span>
+    </div>
+  </div>
+</div>
+
+<!-- Execute bar -->
+<div class="exec-bar">
+  <button class="exec-btn" onclick="executeSearch()">▶  Execute (F8)</button>
+  <button class="cancel-btn" onclick="clearResults()">Clear</button>
+  <span style="font-size:10px;font-family:Arial;color:#666">Press F8 or click Execute to display results</span>
+</div>
+
+<!-- Message bar -->
+<div class="msg-bar" id="msg-bar"></div>
+
+<!-- ALV Results grid -->
+<div class="alv-container" id="alv-container" style="display:none">
+  <div class="alv-toolbar">
+    <div class="alv-title">List of Purchase Requisitions</div>
+    <div class="alv-count" id="alv-count">0 entries</div>
+    <button class="tb-btn" style="margin-left:8px" onclick="exportCSV()">📤 Export</button>
+    <button class="tb-btn" style="margin-left:4px;color:#a00;border-color:#c88" onclick="resetDemoData()" title="Remove all test/demo records and restore seed data">🗑 Clear Test Data</button>
+  </div>
+  <table class="alv-table" id="alv-table">
+    <thead>
+      <tr>
+        <th style="width:20px"><input type="checkbox" id="chk-all" onchange="selectAll(this)"/></th>
+        <th onclick="sortTable('pr_id')">PR Number</th>
+        <th onclick="sortTable('description')">Short Text</th>
+        <th onclick="sortTable('vendor_name')">Vendor/Supplier</th>
+        <th onclick="sortTable('quantity')">Qty</th>
+        <th onclick="sortTable('amount')">Net Value</th>
+        <th onclick="sortTable('requestor')">Requisitioner</th>
+        <th onclick="sortTable('created_at')">Req. Date</th>
+        <th onclick="sortTable('status')">Status</th>
+        <th>PR URL</th>
+      </tr>
+    </thead>
+    <tbody id="alv-body"></tbody>
+  </table>
+</div>
+
+<!-- Detail panel -->
+<div class="detail-panel" id="detail-panel">
+  <div class="detail-header">
+    <h2 id="detail-title">Display Purchase Requisition: PRCRQ-XX</h2>
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+  </div>
+  <div class="detail-tabs">
+    <div class="detail-tab active" onclick="switchTab(this, 'tab-header')">Header</div>
+    <div class="detail-tab" onclick="switchTab(this, 'tab-items')">Item Overview</div>
+    <div class="detail-tab" onclick="switchTab(this, 'tab-account')">Account Assignment</div>
+  </div>
+  <div class="detail-body">
+    <div id="tab-header">
+      <div class="detail-section">
+        <div class="detail-section-title">General Data</div>
+        <div class="detail-grid">
+          <div class="detail-label">PR Number</div>
+          <div class="detail-value" id="d-pr-id">—</div>
+          <div class="detail-label">Status</div>
+          <div class="detail-value" id="d-status">—</div>
+          <div class="detail-label">Short Text</div>
+          <div class="detail-value" id="d-desc">—</div>
+          <div class="detail-label">Requisitioner</div>
+          <div class="detail-value" id="d-req">—</div>
+          <div class="detail-label">Created On</div>
+          <div class="detail-value" id="d-date">—</div>
+          <div class="detail-label">Vendor/Supplier</div>
+          <div class="detail-value" id="d-vendor">—</div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Purchase Details</div>
+        <div class="detail-grid">
+          <div class="detail-label">Quantity</div>
+          <div class="detail-value" id="d-qty">—</div>
+          <div class="detail-label">Net Value</div>
+          <div class="detail-value amount" id="d-amount">—</div>
+          <div class="detail-label">Currency</div>
+          <div class="detail-value" id="d-currency">USD</div>
+          <div class="detail-label">Material Group</div>
+          <div class="detail-value" id="d-matgrp">—</div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Procurement System Link</div>
+        <div class="detail-grid">
+          <div class="detail-label">PR URL</div>
+          <div class="detail-value" id="d-pr-url" style="background:white;border:none">—</div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-items" style="display:none">
+      <div class="detail-section">
+        <div class="detail-section-title">Item Overview</div>
+        <table class="alv-table" style="margin-top:4px">
+          <thead><tr>
+            <th>Item</th><th>Material</th><th>Short Text</th><th>Quantity</th><th>Unit</th><th>Net Price</th><th>Net Value</th>
+          </tr></thead>
+          <tbody id="detail-items-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="tab-account" style="display:none">
+      <div class="detail-section">
+        <div class="detail-section-title">Account Assignment</div>
+        <div class="detail-grid">
+          <div class="detail-label">Cost Center</div>
+          <div class="detail-value">CC-1001</div>
+          <div class="detail-label">G/L Account</div>
+          <div class="detail-value">470000</div>
+          <div class="detail-label">Company Code</div>
+          <div class="detail-value">1000</div>
+          <div class="detail-label">Business Area</div>
+          <div class="detail-value">CORP</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Status bar -->
+<div class="status-bar">
+  <span id="status-msg">Ready</span>
+  <span>ME5A | List Display of Purchase Requisitions | SAP ERP 6.0</span>
+</div>
+
+<script>
+const API = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+
+// ── Demo seed data ─────────────────────────────────────────────────────────
+const SEED = [
+  { pr_id: 'PRCRQ-70', description: 'BIC Round Stic Ballpoint Pens, Medium Point, Black, 60-Count', vendor_name: 'Amazon Business', quantity: 10, amount: 89.90, requestor: 'TIM KIM', created_at: '2026-04-15', status: 'Submitted', budget_category: 'OFFICE', pr_url: null },
+  { pr_id: 'PRCRQ-69', description: 'Ballpoint pens', vendor_name: 'Amazon Business', quantity: 10, amount: 89.90, requestor: 'TIM KIM', created_at: '2026-04-15', status: 'Cart Received', budget_category: 'OFFICE', pr_url: null },
+  { pr_id: 'PR-1096',  description: 'AWS Credits Q1', vendor_name: 'Amazon Web Services', quantity: 1, amount: 8000.00, requestor: 'J. DAVIS', created_at: '2024-11-12', status: 'Approved', budget_category: 'SW-SVC', pr_url: null },
+  { pr_id: 'PR-1095',  description: 'Lab Supplies Q4', vendor_name: 'Thermo Fisher Scientific', quantity: 1, amount: 3200.00, requestor: 'M. CHEN', created_at: '2024-11-11', status: 'Pending', budget_category: 'R&D', pr_url: null },
+  { pr_id: 'PR-1094',  description: 'IT Equipment Refresh', vendor_name: 'Dell Technologies', quantity: 1, amount: 12400.00, requestor: 'T. RODRIGUEZ', created_at: '2024-11-12', status: 'Pending', budget_category: 'IT', pr_url: null },
+  { pr_id: 'PR-1093',  description: 'Office Supplies Nov', vendor_name: 'Staples Business', quantity: 1, amount: 892.50, requestor: 'A. PATEL', created_at: '2024-11-11', status: 'Approved', budget_category: 'OFFICE', pr_url: null },
+  { pr_id: 'PR-1092',  description: 'MRO Supplies', vendor_name: 'Grainger', quantity: 1, amount: 1440.00, requestor: 'K. WILLIAMS', created_at: '2024-11-11', status: 'Complete', budget_category: 'MRO', pr_url: null },
+];
+
+let allData    = [...SEED];
+let filtered   = [...SEED];
+let sortCol    = null;
+let sortDir    = 1;
+let selectedPR = null;
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('sys-time').textContent =
+    now.toLocaleTimeString('en-US', {hour12: false});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Fetch from API and merge ──────────────────────────────────────────────
+async function fetchFromAPI() {
+  try {
+    const res  = await fetch(`${API}/api/procurement/purchase-requests`);
+    const data = await res.json();
+    if (data.results) {
+      const apiIds = new Set(data.results.map(r => r.pr_id || r.pr_number));
+      const newItems = data.results.map(r => ({
+        pr_id:           r.pr_id || r.pr_number,
+        description:     r.description || r.item || 'Procurement Request',
+        vendor_name:     r.vendor_name || 'Amazon Business',
+        quantity:        r.quantity || r.line_items?.reduce((s,i) => s + (i.qty||1), 0) || 1,
+        amount:          r.amount || 0,
+        requestor:       (r.requestor || 'UNKNOWN').toUpperCase(),
+        created_at:      (r.created_at || '').slice(0,10),
+        status:          r.status?.replace(/_/g,' ') || 'Open',
+        budget_category: r.budget_category || 'GEN',
+        pr_url:          r.pr_url || null,
+      }));
+      // Merge — API data takes precedence, then seed
+      const seedFiltered = SEED.filter(s => !apiIds.has(s.pr_id));
+      allData  = [...newItems, ...seedFiltered];
+      filtered = [...allData];
+    }
+  } catch(e) {
+    console.warn('API offline — using seed data');
+  }
+}
+
+// ── Execute search ────────────────────────────────────────────────────────
+async function executeSearch() {
+  showMsg('info', '⏳ Executing query...');
+  await fetchFromAPI();
+
+  const pgrp   = document.getElementById('sel-pgrp').value.trim().toLowerCase();
+  const req    = document.getElementById('sel-req').value.trim().toLowerCase();
+  const matgrp = document.getElementById('sel-matgrp').value.trim().toLowerCase();
+  const prnum  = document.getElementById('sel-prnum').value.trim().toLowerCase();
+
+  filtered = allData.filter(r => {
+    if (pgrp   && !r.vendor_name.toLowerCase().includes(pgrp))        return false;
+    if (req    && !r.requestor.toLowerCase().includes(req))            return false;
+    if (matgrp && !r.budget_category.toLowerCase().includes(matgrp))  return false;
+    if (prnum  && !r.pr_id.toLowerCase().includes(prnum))             return false;
+    return true;
+  });
+
+  renderTable();
+  document.getElementById('alv-container').style.display = 'block';
+  showMsg('info', `✓ ${filtered.length} purchase requisition(s) found.`);
+  document.getElementById('status-msg').textContent = `${filtered.length} entries displayed`;
+}
+
+function clearResults() {
+  document.getElementById('alv-container').style.display = 'none';
+  document.getElementById('detail-panel').classList.remove('open');
+  hideMsg();
+  document.getElementById('status-msg').textContent = 'Ready';
+  ['sel-pgrp','sel-req','sel-matgrp','sel-prnum'].forEach(id => document.getElementById(id).value = '');
+}
+
+// ── Table rendering ───────────────────────────────────────────────────────
+function renderTable() {
+  const body = document.getElementById('alv-body');
+  document.getElementById('alv-count').textContent = `${filtered.length} entr${filtered.length===1?'y':'ies'}`;
+
+  body.innerHTML = filtered.map((r, i) => {
+    const statusClass = {
+      'Approved': 'status-approved', 'Pending': 'status-pending',
+      'Complete': 'status-complete', 'Submitted': 'status-new',
+      'AUTO APPROVED': 'status-approved', 'PENDING APPROVAL': 'status-pending',
+      'Cart Received': 'status-pending',
+    }[r.status] || 'status-pending';
+
+    const dotClass = {
+      'Approved': 'status-approved', 'Pending': 'status-pending',
+      'Complete': 'status-complete', 'Submitted': 'status-new',
+      'AUTO APPROVED': 'status-approved', 'PENDING APPROVAL': 'status-pending',
+    }[r.status] || 'status-pending';
+
+    const prUrlCell = r.pr_url
+      ? `<a class="pr-url-link" href="${r.pr_url}" target="_blank">📎 View PR</a>`
+      : '<span style="color:#aaa;font-size:10px">—</span>';
+
+    return `<tr id="row-${i}" onclick="selectRow(${i})" ondblclick="openDetail(${i})">
+      <td><input type="checkbox" class="row-chk"/></td>
+      <td><span class="pr-link" ondblclick="openDetail(${i})">${r.pr_id}</span></td>
+      <td>${r.description}</td>
+      <td>${r.vendor_name}</td>
+      <td style="text-align:right">${r.quantity}</td>
+      <td style="text-align:right;font-weight:bold">${Number(r.amount).toFixed(2)}</td>
+      <td>${r.requestor}</td>
+      <td>${r.created_at}</td>
+      <td><span class="status-dot ${dotClass}"></span><span class="status-text">${r.status}</span></td>
+      <td>${prUrlCell}</td>
+    </tr>`;
+  }).join('');
+}
+
+function selectRow(i) {
+  document.querySelectorAll('.alv-table tr').forEach(r => r.classList.remove('selected'));
+  document.getElementById('row-' + i)?.classList.add('selected');
+  selectedPR = filtered[i];
+  document.getElementById('status-msg').textContent = `Selected: ${filtered[i].pr_id} — ${filtered[i].description}`;
+}
+
+function openDetail(i) {
+  const r = filtered[i];
+  selectedPR = r;
+  document.getElementById('detail-title').textContent = `Display Purchase Requisition: ${r.pr_id}`;
+  document.getElementById('d-pr-id').textContent   = r.pr_id;
+  document.getElementById('d-status').textContent  = r.status;
+  document.getElementById('d-desc').textContent    = r.description;
+  document.getElementById('d-req').textContent     = r.requestor;
+  document.getElementById('d-date').textContent    = r.created_at;
+  document.getElementById('d-vendor').textContent  = r.vendor_name;
+  document.getElementById('d-qty').textContent     = r.quantity;
+  document.getElementById('d-amount').textContent  = `${Number(r.amount).toFixed(2)} USD`;
+  document.getElementById('d-currency').textContent = 'USD';
+  document.getElementById('d-matgrp').textContent  = r.budget_category;
+
+  const prUrlEl = document.getElementById('d-pr-url');
+  if (r.pr_url) {
+    prUrlEl.innerHTML = `<a class="pr-url-link" href="${r.pr_url}" target="_blank">${r.pr_url}</a>`;
+  } else {
+    prUrlEl.textContent = '(No Value)';
+  }
+
+  // Items tab
+  document.getElementById('detail-items-body').innerHTML = `
+    <tr>
+      <td>00010</td>
+      <td>${r.pr_id}</td>
+      <td>${r.description}</td>
+      <td style="text-align:right">${r.quantity}</td>
+      <td>EA</td>
+      <td style="text-align:right">${(r.amount/r.quantity).toFixed(2)}</td>
+      <td style="text-align:right;font-weight:bold">${Number(r.amount).toFixed(2)}</td>
+    </tr>`;
+
+  document.getElementById('detail-panel').classList.add('open');
+  document.getElementById('detail-panel').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('open');
+}
+
+function switchTab(el, tabId) {
+  document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['tab-header','tab-items','tab-account'].forEach(id => {
+    document.getElementById(id).style.display = id === tabId ? 'block' : 'none';
+  });
+}
+
+// ── Sort ──────────────────────────────────────────────────────────────────
+function sortTable(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = 1; }
+  filtered.sort((a, b) => {
+    const av = a[col] || '';
+    const bv = b[col] || '';
+    return av < bv ? -sortDir : av > bv ? sortDir : 0;
+  });
+  renderTable();
+}
+
+// ── Select all ────────────────────────────────────────────────────────────
+function selectAll(chk) {
+  document.querySelectorAll('.row-chk').forEach(c => c.checked = chk.checked);
+}
+
+// ── Toggle selection screen ───────────────────────────────────────────────
+function toggleSelection() {
+  const body = document.querySelector('.selection-screen .sel-body');
+  const execBar = document.querySelector('.exec-bar');
+  const isHidden = body.style.display === 'none';
+  body.style.display = isHidden ? 'block' : 'none';
+  execBar.style.display = isHidden ? 'flex' : 'none';
+  document.querySelector('.sel-title').style.cssText = isHidden
+    ? '' : 'cursor:pointer;';
+  document.querySelector('.sel-title::before');
+}
+
+// ── Messages ──────────────────────────────────────────────────────────────
+function showMsg(type, text) {
+  const bar = document.getElementById('msg-bar');
+  bar.className = `msg-bar ${type}`;
+  bar.innerHTML = `<span>${type === 'info' ? 'ℹ' : type === 'error' ? '✕' : '⚠'}</span> ${text}`;
+  bar.style.display = 'flex';
+}
+function hideMsg() {
+  document.getElementById('msg-bar').style.display = 'none';
+}
+
+// ── Export CSV ────────────────────────────────────────────────────────────
+function exportCSV() {
+  const headers = ['PR Number','Short Text','Vendor','Qty','Net Value','Requisitioner','Date','Status'];
+  const rows    = filtered.map(r => [r.pr_id, r.description, r.vendor_name, r.quantity, r.amount, r.requestor, r.created_at, r.status]);
+  const csv     = [headers, ...rows].map(r => r.join(',')).join('\n');
+  const a       = document.createElement('a');
+  a.href        = 'data:text/csv,' + encodeURIComponent(csv);
+  a.download    = 'purchase_requisitions_ME5A.csv';
+  a.click();
+}
+
+// ── Reset demo data ───────────────────────────────────────────────────────
+
+async function resetDemoData() {
+  if (!confirm('Remove all test records and restore seed data?')) return;
+  showMsg('warning', '⏳ Resetting demo data...');
+  try {
+    const res = await fetch(`${API}/api/procurement/reset`, { method: 'POST' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    showMsg('info', `✓ ${data.message}`);
+    await executeSearch();
+  } catch(e) {
+    showMsg('error', `✕ Reset failed: ${e.message}`);
+  }
+}
+
+// ── Keyboard shortcuts ────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'F8') { e.preventDefault(); executeSearch(); }
+  if (e.key === 'Escape') closeDetail();
+});
+
+// Auto-execute on load — and open specific PR if passed in URL
+window.addEventListener('load', async () => {
+  await executeSearch();
+
+  // Check if a specific PR was requested via ?pr=PRCRQ-XX
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetPR  = urlParams.get('pr');
+  if (targetPR) {
+    const idx = filtered.findIndex(r =>
+      r.pr_id.toLowerCase() === targetPR.toLowerCase()
+    );
+    if (idx >= 0) {
+      selectRow(idx);
+      openDetail(idx);
+      showMsg('info', `✓ Displaying requisition ${filtered[idx].pr_id} — ${filtered[idx].description}`);
+    } else {
+      showMsg('warning', `⚠ PR ${targetPR} not found in current list.`);
+    }
+  }
+});
+</script>
+</body>
+</html>
