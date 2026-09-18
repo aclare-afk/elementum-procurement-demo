@@ -1,31 +1,38 @@
 // POST /api/punchout/cart-return
 // Called by amazon-mock.html when user submits their cart back to Elementum.
-
+ 
 import { store, genId, aiPolicyCheck, generatePO, cors, createPR } from '../../lib/store.js';
-
+ 
 export default async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
+ 
   const { session_id, items, total } = req.body;
   if (!session_id || !items || total === undefined) {
     return res.status(400).json({ error: 'session_id, items, and total are required' });
   }
-
+ 
+  // vendor_id/vendor_name/org are optional so existing callers (the original
+  // amazon-mock.html) keep working unchanged with the old Amazon defaults.
+  const vendorId   = req.body.vendor_id   || 'amazon';
+  const vendorName = req.body.vendor_name || 'Amazon Business';
+  const org        = req.body.org         || 'presentation-se';
+ 
   const prId    = genId('PR');
-  const policy  = aiPolicyCheck(total, 'amazon');
+  const policy  = aiPolicyCheck(total, vendorId);
   const quantity = items.reduce((s, i) => s + (i.qty || 1), 0);
   const description = items[0]?.name || 'Procurement Request';
-
+ 
   const pr = {
     pr_id:       prId,
     pr_number:   prId,
     source:      'PUNCHOUT_FLOW',
     record_id:   session_id,
+    org,
     description,
-    vendor_id:   'amazon',
-    vendor_name: 'Amazon Business',
+    vendor_id:   vendorId,
+    vendor_name: vendorName,
     amount:      total,
     quantity,
     requestor:   'ACLARE@ELEMENTUM.COM',
@@ -34,15 +41,15 @@ export default async function handler(req, res) {
     line_items:  items,
     created_at:  new Date().toISOString(),
   };
-
+ 
   if (policy.auto_approved) {
     const po = generatePO(pr);
     pr.po_number = po.po_number;
   }
-
+ 
   // Save to Upstash-backed durable store
   await createPR(pr);
-
+ 
   return res.status(201).json({
     message:       `Cart received. Requisition ${prId} created.`,
     flow_id:       session_id,
