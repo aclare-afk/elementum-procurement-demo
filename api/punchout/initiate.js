@@ -1,3 +1,4 @@
+
 // POST /api/punchout/initiate
 // Tim's contract — Elementum calls this to start a punchout session.
 // Returns a shopping URL with record_id baked in.
@@ -21,6 +22,24 @@ const VENDOR_PAGES = {
   biosource: 'biosource-mock.html',
 };
  
+// The automation passes whatever is in the record's "Supplier" field (e.g.
+// "Amazon Business" or "BioSource Scientific"), not our short internal keys —
+// and older/manual callers may still pass the short key directly ("amazon").
+// Match on substrings both ways so either form resolves correctly.
+const VENDOR_ALIASES = {
+  amazon:    ['amazon', 'amazon business'],
+  biosource: ['biosource', 'biosource scientific'],
+};
+ 
+function resolveVendor(raw) {
+  const v = (raw || '').toLowerCase().trim();
+  if (!v) return 'amazon';
+  for (const [key, aliases] of Object.entries(VENDOR_ALIASES)) {
+    if (aliases.some(alias => v.includes(alias) || alias.includes(v))) return key;
+  }
+  return 'amazon';
+}
+ 
 export default function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -31,7 +50,7 @@ export default function handler(req, res) {
     : "DEMO-" + Date.now();
   const user   = req.body.user  || "Elementum User";
   const items  = req.body.items || [];  // optional pre-populated cart items from agent
-  const vendor = (req.body.vendor || "amazon").toLowerCase();
+  const vendor = resolveVendor(req.body.vendor);
   const org    = (req.body.org    || "presentation-se").toLowerCase();
  
   const page = VENDOR_PAGES[vendor] || VENDOR_PAGES.amazon;
