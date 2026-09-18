@@ -273,31 +273,29 @@ const ELEMENTUM = window.location.hostname === 'localhost'
   ? 'http://localhost:8000'
   : '';  // On Vercel, same domain
 
-// ── Elementum API config ─────────────────────────────────────────────────
-const ELEMENTUM_API_BASE    = 'https://api.elementum.io/v1';
-const ELEMENTUM_RECORD_TYPE = 'apps';
-const ELEMENTUM_ALIAS       = 'purchasereqmngmnt';
-const ELEMENTUM_CLIENT_ID   = 'd0915e212254e98514012b0e15df7e4d';
-const ELEMENTUM_CLIENT_SECRET = '37463afccdf454a802055009f2d0e600';
-const ELEMENTUM_TOKEN_URL   = 'https://api.elementum.io/oauth/token';
+// ── Org-aware routing ──────────────────────────────────────────────────────
+// FIX (Sept 2026): this page used to hardcode its return URL to
+// presentation-se's "purchasereqmngmnt" app no matter which org actually
+// launched the punchout session, so a dev-se session bounced to a record
+// that only exists in presentation-se. Now it reads an `org` param (added
+// to the "Shop Catalog" link template in each org's automation) and routes
+// back to that org's own host + app alias. Add new orgs here as they're
+// wired up. (The old hardcoded, publicly-exposed ELEMENTUM_CLIENT_ID /
+// ELEMENTUM_CLIENT_SECRET block that used to live here was dead code —
+// nothing ever called getElementumToken() — and has been removed; the real
+// token fetch happens server-side in /api/elementum-proxy.)
+const ORG_ROUTES = {
+  'dev-se':          { host: 'dev-se.elementum.io',          alias: 'purchaserequests'   },
+  'presentation-se': { host: 'presentation-se.elementum.io', alias: 'purchasereqmngmnt'  },
+};
+const ORG   = (params.get('org') || 'presentation-se').toLowerCase();
+const ROUTE = ORG_ROUTES[ORG] || ORG_ROUTES['presentation-se'];
 
-// Fetch a fresh OAuth token — never hardcoded, never expires mid-demo
-async function getElementumToken() {
-  try {
-    const res = await fetch(ELEMENTUM_TOKEN_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `grant_type=client_credentials&client_id=${ELEMENTUM_CLIENT_ID}&client_secret=${ELEMENTUM_CLIENT_SECRET}&audience=https://api.elementum.io`,
-    });
-    const data = await res.json();
-    return data.access_token;
-  } catch (err) {
-    console.warn('Token fetch failed:', err);
-    return null;
-  }
+function elementumReturnUrl() {
+  return `https://${ROUTE.host}/apps/${ROUTE.alias}/${RECORD_ID}`;
 }
 
-document.getElementById('session-display').textContent = (USER && USER !== 'user' ? USER + ' · ' : '') + 'Session: ' + RECORD_ID;
+document.getElementById('session-display').textContent = (USER && USER !== 'user' ? USER + ' · ' : '') + 'Session: ' + RECORD_ID + ' · Org: ' + ORG;
 
 
 // ─── Products ─────────────────────────────────────────────────────────────
@@ -446,14 +444,14 @@ async function returnCartToElementum() {
     "Stage":            "Cart Received",
   };
 
-  console.log('Sending to Elementum via proxy:', RECORD_ID, elementumPayload);
+  console.log('Sending to Elementum via proxy:', ORG, RECORD_ID, elementumPayload);
 
   // await the proxy so it completes before we redirect
   try {
     const proxyRes  = await fetch(`${ELEMENTUM}/api/elementum-proxy`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ record_id: RECORD_ID, payload: elementumPayload }),
+      body:    JSON.stringify({ record_id: RECORD_ID, org: ORG, payload: elementumPayload }),
     });
     const proxyData = await proxyRes.json();
     console.log('Elementum proxy response:', proxyData);
@@ -467,7 +465,10 @@ async function returnCartToElementum() {
 
   try {
     const localPayload = {
-      session_id: SESSION_ID,
+      session_id:  SESSION_ID,
+      org:         ORG,
+      vendor_id:   'amazon',
+      vendor_name: 'Amazon Business',
       items: items.map(i => ({
         name:       i.name,
         qty:        i.qty,
@@ -493,14 +494,14 @@ async function returnCartToElementum() {
 
   loading.classList.remove('show');
 
-  // Redirect straight back to the Elementum record
+  // Redirect back to the record in the SAME org that launched this session.
   // The PR confirmation page will be accessed via the PR URL field in the record
-  window.location.href = `https://presentation-se.elementum.io/apps/purchasereqmngmnt/${RECORD_ID}`;
+  window.location.href = elementumReturnUrl();
 }
 
 function goBackToElementum() {
-  // Deep link back to the specific record in Elementum
-  window.location.href = `https://presentation-se.elementum.io/apps/purchasereqmngmnt/${RECORD_ID}`;
+  // Deep link back to the specific record in the org that launched this session.
+  window.location.href = elementumReturnUrl();
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────
