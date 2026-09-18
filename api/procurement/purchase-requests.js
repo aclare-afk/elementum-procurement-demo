@@ -1,7 +1,20 @@
 // GET  /api/procurement/purchase-requests  — list all PRs
-// POST /api/procurement/purchase-requests  — create a PR (Tim's contract)
+// POST /api/procurement/purchase-requests  — generate a PR number for the
+//   "Submit Procurement Request" Elementum automation's "Call Procurement
+//   System" task.
+//
+// FIX (Sept 2026): this used to also write a second, parallel PR entry into
+// the shared store via createPR(), hardcoded to vendor_name: 'Amazon
+// Business' / vendor_id: 'amazon' regardless of which supplier the punchout
+// flow actually used. That produced a mislabeled duplicate row in the SAP
+// mock (sap-procurement.html) alongside the correct entry that
+// api/punchout/cart-return.js already writes for the same PR. Nothing
+// downstream of this endpoint (Update Record Fields / Notify Requestor /
+// Create Record in the automation) reads anything from the store write —
+// they only consume this response's pr_number/status — so the store write
+// is dropped entirely rather than threading real vendor data through it.
 
-import { listPRs, createPR, genId, aiPolicyCheck, generatePO, cors, store } from '../../lib/store.js';
+import { listPRs, genId, cors } from '../../lib/store.js';
 
 export default async function handler(req, res) {
   cors(res);
@@ -13,33 +26,12 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { record_id } = req.body;
-    const requester = req.body.requester && req.body.requester !== 'null' ? req.body.requester : 'Elementum User';
-    const item      = req.body.item      && req.body.item      !== 'null' ? req.body.item      : 'Procurement Request';
-    const amount    = req.body.amount    && req.body.amount    !== 'null' ? parseFloat(req.body.amount) : 0;
-    const quantity  = req.body.quantity  && req.body.quantity  !== 'null' ? parseInt(req.body.quantity) : 1;
-
+    // record_id/requester/item/quantity/amount/cost_center arrive here but
+    // are no longer persisted — the real PR record (with correct vendor
+    // data) is already created by api/punchout/cart-return.js. This call
+    // just needs to hand the automation a PR number and status to stamp
+    // back onto the Elementum record and PO.
     const prNumber = genId('PR');
-    const policy   = aiPolicyCheck(amount, 'amazon');
-
-    const pr = {
-      pr_id:       prNumber,
-      pr_number:   prNumber,
-      source:      'TIM_FLOW',
-      record_id:   record_id || null,
-      description: item,
-      vendor_name: 'Amazon Business',
-      vendor_id:   'amazon',
-      amount,
-      quantity,
-      requestor:   requester,
-      status:      'pending_approval',
-      ai_policy:   policy,
-      line_items:  [],
-      created_at:  new Date().toISOString(),
-    };
-
-    await createPR(pr);
 
     return res.status(200).json({ pr_number: prNumber, status: 'pending_approval' });
   }
