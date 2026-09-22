@@ -467,6 +467,7 @@ async function returnCartToElementum() {
     const localPayload = {
       session_id:  SESSION_ID,
       org:         ORG,
+      requestor:   USER,
       vendor_id:   'amazon',
       vendor_name: 'Amazon Business',
       items: items.map(i => ({
